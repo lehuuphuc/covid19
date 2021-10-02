@@ -2,7 +2,6 @@
   <q-dialog
     :model-value="props.modelValue"
     :persistent="false"
-    :maximized="maximizedToggle"
     transition-show="slide-up"
     transition-hide="slide-down"
     @update:model-value="emit('update:model-value', $event)"
@@ -185,7 +184,7 @@ async function initialize () {
   isLoading.value = false;
 }
 
-watch(() => props.modelValue, (value, previousValue) => {
+watch(() => props.modelValue, (value) => {
   if (!value) {
     country.value = null;
 
