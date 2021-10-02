@@ -1,13 +1,13 @@
 <template>
   <q-dialog
     :model-value="props.modelValue"
-    persistent
+    :persistent="false"
     :maximized="maximizedToggle"
     transition-show="slide-up"
     transition-hide="slide-down"
     @update:model-value="emit('update:model-value', $event)"
   >
-    <q-card>
+    <q-card :class="{ 'country-modal--desktop': $q.screen.gt.xs }">
       <q-bar>
         <img
           v-if="country?.flagImageUri"
@@ -15,7 +15,13 @@
           class="country-modal__country-flag vertical-middle q-ml-sm"
         >
         <q-space />
-        <q-btn dense flat icon="star" v-close-popup>
+        <q-btn
+          dense
+          flat
+          icon="star"
+          :class="{ 'text-amber-8': isBookmarked }"
+          @click="bookmarkHandler"
+        >
           <q-tooltip anchor="top middle" self="bottom middle">Bookmark</q-tooltip>
         </q-btn>
         <q-btn dense flat icon="close" v-close-popup>
@@ -28,7 +34,7 @@
           <!-- name -->
           <field>
             <template #label>
-              Name:
+              Country:
             </template>
             {{ country?.name }}
           </field>
@@ -55,9 +61,8 @@
           </field>
         </div>
         <div
-          v-if="isLoaded"
+          v-if="country"
           class="country-modal__chart"
-          style="width: 300px;"
         >
           <div class="text-weight-medium">Total Confirmed Cases In Last 7 Days</div>
           <!-- chart -->
@@ -70,14 +75,23 @@
 </template>
 
 <script setup>
-import { ref, computed, useSlots, useAttrs, getCurrentInstance, defineProps, defineEmits } from 'vue';
+import { ref, computed, useSlots, useAttrs, getCurrentInstance, defineProps, defineEmits, watch } from 'vue';
+import { useQuasar } from 'quasar';
 import { fetchCountryData, fetchCovid19DataByCountry, fetchCovid19Data, handleError, formatDate, formatNumber } from 'src/helpers/helpers';
+import { BOOKMARKED_COUNTRIES } from 'src/constants/constants';
 import { api } from 'src/boot/axios';
 import Field from 'src/components/Field.vue';
 import Loader from 'src/components/Loader.vue';
+import { useStore } from 'vuex';
 
 const props = defineProps({ modelValue: Boolean, countryCode: String, shouldFetchFromBookmark: Boolean });
 const emit = defineEmits(['update:model-value']);
+const $q = useQuasar();
+const $store = useStore();
+const bookmarkedCountries = computed(() => $store.getters['app/bookmarkedCountries']);
+const isBookmarked = computed(() => !!bookmarkedCountries.value.find(({ code }) => code === props.countryCode));
+console.log('bookmarkedCountries', bookmarkedCountries);
+
 // const slots = useSlots();
 // const attrs = useAttrs();
 // const value = ref(null);
@@ -90,8 +104,8 @@ const emit = defineEmits(['update:model-value']);
 // });
 console.log('aaa', formatNumber(123));
 const isLoading = ref(false);
-const isLoaded = ref(false);
-const country = ref({
+const country = ref(null);
+const country1 = ref({
   capital: 'Washington, D.C.',
   code: 'US',
   currencyCodes: [
@@ -179,25 +193,79 @@ const chartData = computed(() => ({
   ],
 }));
 
-async function initialize () {
-  isLoading.value = true;
-  // const response = await fetchCovid19Data({
-  //   countryCode: props.countryCode,
-  // })
-  //   .catch(handleError());
-  // country.value = response?.data?.data;
+function bookmarkHandler () {
+  if (!country.value) {
+    return;
+  }
 
-  // const response = await fetchCovid19DataByCountry(props.countryCode).catch(handleError());
-  // const covid19Data = (response?.data ?? []).map(({ Confirmed: confirmed, Date: date }) => ({ confirmed, date }));
-  // console.log('covid19Data', covid19Data);
-  isLoading.value = false;
-  isLoaded.value = true;
+  const otherBookmarkedCountries = bookmarkedCountries.value.filter(({ code }) => code !== props.countryCode) || [];
+  const updatedBookmarkedCountries = isBookmarked.value
+    ? otherBookmarkedCountries
+    : [...otherBookmarkedCountries, country.value];
+
+  $q.localStorage.set(BOOKMARKED_COUNTRIES, updatedBookmarkedCountries);
+  $store.commit('app/updateBookmarkedCountries', updatedBookmarkedCountries);
 }
 
-initialize();
+async function initialize () {
+  console.log('initialize', country.value?.code);
+  if (country.value?.code) {
+    return;
+  }
+
+  if (props.shouldFetchFromBookmark) {
+    const bookmarkedCountry = bookmarkedCountries.value.find(({ code }) => props.countryCode === code);
+
+    if (bookmarkedCountry?.code) {
+      country.value = bookmarkedCountry;
+      isLoading.value = false;
+
+      return;
+    }
+  }
+
+  let countryData = null;
+  isLoading.value = true;
+  console.log('fetchCountryData');
+  const countryResponse = await fetchCountryData(props.countryCode)
+    .catch(handleError());
+  console.log('111', countryResponse?.data?.data);
+  countryData = countryResponse?.data?.data;
+
+  if (!countryData) {
+    isLoading.value = false;
+
+    return;
+  }
+
+  console.log('fetchCovid19DataByCountry');
+  const covid19DataResponse = await fetchCovid19DataByCountry(props.countryCode)
+    .catch(handleError());
+  const covid19Data = (covid19DataResponse?.data ?? []).map(({ Confirmed: confirmed, Date: date }) => ({ confirmed, date }));
+  console.log('222', covid19Data);
+  countryData.covid19Data = covid19Data;
+  country.value = countryData;
+
+  isLoading.value = false;
+}
+
+watch(() => props.modelValue, (value, previousValue) => {
+  console.log('watch', value, previousValue);
+  if (!value) {
+    country.value = null;
+
+    return;
+  }
+  console.log('watch', country);
+  initialize();
+});
+
 </script>
 
 <style scoped lang="scss">
+.country-modal--desktop {
+  min-width: 32rem;
+}
 .country-modal__country-flag { max-height: 1rem; }
 .field { padding: .25rem 0; }
 .field:not(:last-child) {

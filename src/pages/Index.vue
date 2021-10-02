@@ -5,17 +5,21 @@
       :rows="rows"
       :columns="columns"
       :pagination="pagination"
+      :binary-state-sort="true"
       row-key="name"
       @row-click="rowClickHandler"
     />
-    <country-modal v-model="isModalVisible" :country-code="'US'" />
+    <country-modal
+      v-model="isModalVisible"
+      :country-code="countryCode"
+    />
     <loader v-if="isLoading" />
   </q-page>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
-import { camelCaseKeys, handleError, fetchCovid19Data } from 'src/helpers/helpers';
+import { camelCaseKeys, handleError, fetchCovid19Data, formatNumber } from 'src/helpers/helpers';
 import Loader from 'src/components/Loader.vue';
 import CountryModal from 'src/components/CountryModal.vue';
 
@@ -129,13 +133,15 @@ const columns = computed(() => [
     label: 'Country',
     align: 'left',
     field: 'country',
+    sortable: true,
   },
   {
     name: 'totalConfirmed',
     required: true,
     label: 'Total Confirmed Cases',
     align: 'right',
-    field: (row) => row.totalConfirmed,
+    field: (row) => (row.totalConfirmed),
+    format: formatNumber,
     sortable: true,
   },
   {
@@ -144,6 +150,7 @@ const columns = computed(() => [
     label: 'Total Deaths',
     align: 'right',
     field: 'totalDeaths',
+    format: formatNumber,
     sortable: true,
   },
   {
@@ -152,6 +159,7 @@ const columns = computed(() => [
     label: 'Total Recovered ',
     align: 'right',
     field: 'totalRecovered',
+    format: formatNumber,
     sortable: true,
   },
 ]);
@@ -163,6 +171,7 @@ const pagination = ref({
   rowsPerPage: 0,
 });
 const isModalVisible = ref(false);
+const countryCode = ref(null);
 
 async function initialize () {
   isLoading.value = true;
@@ -171,7 +180,15 @@ async function initialize () {
   isLoading.value = false;
 }
 
-function rowClickHandler () {
+function rowClickHandler (event, row) {
+  // eslint-disable-next-line prefer-rest-params
+  // console.log('arguments', arguments);
+  console.log('row', row);
+  if (!row?.countryCode) {
+    return;
+  }
+
+  countryCode.value = row?.countryCode;
   isModalVisible.value = true;
 }
 

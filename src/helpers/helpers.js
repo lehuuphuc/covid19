@@ -28,6 +28,10 @@ export const formatDate = (str) => {
 };
 
 export const formatNumber = (number) => {
+  if (typeof number !== 'number') {
+    return '';
+  }
+
   const formatter = new Intl.NumberFormat('en-Us');
 
   return formatter.format(number);
@@ -57,8 +61,6 @@ export const fetchCovid19DataByCountry = (countryCode) => {
     countryCode,
     from: toUTCDateTime(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
     to: toUTCDateTime(new Date(Date.now()).toISOString()),
-    // from: '2021-01-01T00:00:00Z',
-    // to: '2021-01-03T00:00:00Z',
   };
 
   return fetchCovid19Data(options);

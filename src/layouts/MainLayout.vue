@@ -55,8 +55,8 @@ const linksList = [
   },
   {
     title: 'Bookmark',
-    caption: 'Saved bookmarks',
-    icon: 'favorite',
+    caption: 'Bookmarked countries',
+    icon: 'star',
     route: 'bookmark',
   },
 ];
