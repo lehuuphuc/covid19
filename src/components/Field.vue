@@ -16,20 +16,7 @@
 </template>
 
 <script setup>
-import { ref, computed, useSlots, useAttrs, getCurrentInstance } from 'vue';
+import { useSlots } from 'vue';
 
-// const props = defineProps({ foo: String });
-// const emit = defineEmits(['change', 'input']);
 const slots = useSlots();
-// const attrs = useAttrs();
-// const value = ref(null);
-// const computedValue = computed(() => 1234);
-
-// optional
-// defineExpose({
-//   value,
-//   computedValue,
-// });
 </script>
-
-<style scoped lang="scss"></style>

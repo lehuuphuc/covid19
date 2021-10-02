@@ -75,11 +75,10 @@
 </template>
 
 <script setup>
-import { ref, computed, useSlots, useAttrs, getCurrentInstance, defineProps, defineEmits, watch } from 'vue';
+import { ref, computed, defineProps, defineEmits, watch } from 'vue';
 import { useQuasar } from 'quasar';
-import { fetchCountryData, fetchCovid19DataByCountry, fetchCovid19Data, handleError, formatDate, formatNumber } from 'src/helpers/helpers';
+import { fetchCountryData, fetchCovid19DataByCountry, handleError, formatDate, formatNumber } from 'src/helpers/helpers';
 import { BOOKMARKED_COUNTRIES } from 'src/constants/constants';
-import { api } from 'src/boot/axios';
 import Field from 'src/components/Field.vue';
 import Loader from 'src/components/Loader.vue';
 import { useStore } from 'vuex';
@@ -90,62 +89,8 @@ const $q = useQuasar();
 const $store = useStore();
 const bookmarkedCountries = computed(() => $store.getters['app/bookmarkedCountries']);
 const isBookmarked = computed(() => !!bookmarkedCountries.value.find(({ code }) => code === props.countryCode));
-console.log('bookmarkedCountries', bookmarkedCountries);
-
-// const slots = useSlots();
-// const attrs = useAttrs();
-// const value = ref(null);
-// const computedValue = computed(() => 1234);
-
-// optional
-// defineExpose({
-//   value,
-//   computedValue,
-// });
-console.log('aaa', formatNumber(123));
 const isLoading = ref(false);
 const country = ref(null);
-const country1 = ref({
-  capital: 'Washington, D.C.',
-  code: 'US',
-  currencyCodes: [
-    'USD',
-  ],
-  flagImageUri: 'http://commons.wikimedia.org/wiki/Special:FilePath/Flag%20of%20the%20United%20States.svg',
-  name: 'United States of America',
-  numRegions: 56,
-  wikiDataId: 'Q30',
-  covid19Data: [
-    {
-      confirmed: 42900903,
-      date: '2021-09-25T00:00:00Z',
-    },
-    {
-      confirmed: 42931861,
-      date: '2021-09-26T00:00:00Z',
-    },
-    {
-      confirmed: 43116877,
-      date: '2021-09-27T00:00:00Z',
-    },
-    {
-      confirmed: 43226482,
-      date: '2021-09-28T00:00:00Z',
-    },
-    {
-      confirmed: 43349749,
-      date: '2021-09-29T00:00:00Z',
-    },
-    {
-      confirmed: 43460343,
-      date: '2021-09-30T00:00:00Z',
-    },
-    {
-      confirmed: 43618627,
-      date: '2021-10-01T00:00:00Z',
-    },
-  ],
-});
 const chartData = computed(() => ({
   chartOptions: {
     chart: {
@@ -158,7 +103,6 @@ const chartData = computed(() => ({
       },
     },
     xaxis: {
-      // categories: ['1 Jan', '2 Jan', '3 Jan', '4 Jan', '5 Jan', '6 Jan', '7 Jan', '8 Jan', '9 Jan'],
       categories: country.value?.covid19Data?.map(({ date }) => date) ?? [],
       labels: {
         formatter (value) {
@@ -179,12 +123,6 @@ const chartData = computed(() => ({
       hover: { size: 8 },
     },
   },
-  // series: [
-  //   {
-  //     name: 'Total Confirmed',
-  //     data: [100, 41, 35, 51, 49, 62, 69, 91, 148],
-  //   },
-  // ],
   series: [
     {
       name: 'Total Confirmed',
@@ -208,7 +146,6 @@ function bookmarkHandler () {
 }
 
 async function initialize () {
-  console.log('initialize', country.value?.code);
   if (country.value?.code) {
     return;
   }
@@ -226,10 +163,10 @@ async function initialize () {
 
   let countryData = null;
   isLoading.value = true;
-  console.log('fetchCountryData');
+
   const countryResponse = await fetchCountryData(props.countryCode)
-    .catch(handleError());
-  console.log('111', countryResponse?.data?.data);
+    .catch(handleError);
+
   countryData = countryResponse?.data?.data;
 
   if (!countryData) {
@@ -238,11 +175,10 @@ async function initialize () {
     return;
   }
 
-  console.log('fetchCovid19DataByCountry');
   const covid19DataResponse = await fetchCovid19DataByCountry(props.countryCode)
-    .catch(handleError());
+    .catch(handleError);
   const covid19Data = (covid19DataResponse?.data ?? []).map(({ Confirmed: confirmed, Date: date }) => ({ confirmed, date }));
-  console.log('222', covid19Data);
+
   countryData.covid19Data = covid19Data;
   country.value = countryData;
 
@@ -250,13 +186,11 @@ async function initialize () {
 }
 
 watch(() => props.modelValue, (value, previousValue) => {
-  console.log('watch', value, previousValue);
   if (!value) {
     country.value = null;
 
     return;
   }
-  console.log('watch', country);
   initialize();
 });
 

@@ -1,4 +1,5 @@
 import { isObject, isArray, reduce, camelCase } from 'lodash-es';
+import { Notify } from 'quasar';
 import { api } from 'src/boot/axios';
 
 export const camelCaseKeys = (obj) => {
@@ -38,7 +39,6 @@ export const formatNumber = (number) => {
 };
 
 export const fetchCovid19Data = (options = {}) => {
-  console.log('fetchCovid19Data', options);
   const params = options?.countryCode
     ? {
       params: {
@@ -52,8 +52,6 @@ export const fetchCovid19Data = (options = {}) => {
     : 'https://api.covid19api.com/summary';
 
   return api.get(endpoint, params);
-
-  // return camelCaseKeys(response?.data?.Countries ?? []);
 };
 
 export const fetchCovid19DataByCountry = (countryCode) => {
@@ -79,7 +77,5 @@ export const fetchCountryData = (countryCode) => {
 };
 
 export const handleError = () => {
-  console.log('handle Error');
-
-  return () => {};
+  Notify.create('Error occurred');
 };
