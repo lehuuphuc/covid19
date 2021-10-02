@@ -1,6 +1,6 @@
-# Covid19 App (covid19)
+# Covid19 Demo App
 
-Covid19 App
+Covid19 Demo App
 
 ## Install the dependencies
 ```bash
@@ -22,5 +22,5 @@ yarn run lint
 quasar build
 ```
 
-### Customize the configuration
-See [Configuring quasar.conf.js](https://v2.quasar.dev/quasar-cli/quasar-conf-js).
+### Live demo
+[Demo page](https://covid19-demo-app.netlify.app/#/)
